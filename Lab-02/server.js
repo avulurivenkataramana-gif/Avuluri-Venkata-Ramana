@@ -1,5 +1,4 @@
 
-
 const express = require("express");
 const sqlite3 = require("sqlite3");
 const sqlite = require("sqlite");
@@ -9,20 +8,22 @@ const app = express();
 
 app.use(express.json());
 
+// Database path
 const dbPath = path.join(__dirname, "database.db");
 
 let db;
 
 // Home API
-app.get("/", (req, res) => {
-  res.send("Server is working successfully!");
+app.get("/", (request, response) => {
+  response.send("Server is working successfully!");
 });
 
 // GET API - Get all books
 app.get("/books/", async (request, response) => {
   const query = `SELECT * FROM book;`;
   const books = await db.all(query);
-  response.send(books);
+
+  response.status(200).send(books);
 });
 
 // GET API - Get book by ID
@@ -35,7 +36,7 @@ app.get("/books/:bookId/", async (request, response) => {
   if (book === undefined) {
     response.status(404).send("Book Not Found");
   } else {
-    response.send(book);
+    response.status(200).send(book);
   }
 });
 
@@ -49,7 +50,10 @@ app.post("/books/", async (request, response) => {
   `;
 
   const result = await db.run(query, [
-    title, author, price, pages
+    title,
+    author,
+    price,
+    pages
   ]);
 
   response.status(201).send({
@@ -69,13 +73,17 @@ app.put("/books/:bookId/", async (request, response) => {
   `;
 
   const result = await db.run(query, [
-    title, author, price, pages, bookId
+    title,
+    author,
+    price,
+    pages,
+    bookId
   ]);
 
   if (result.changes === 0) {
     response.status(404).send("Book Not Found");
   } else {
-    response.send("Book Updated Successfully");
+    response.status(200).send("Book Updated Successfully");
   }
 });
 
@@ -89,7 +97,7 @@ app.delete("/books/:bookId/", async (request, response) => {
   if (result.changes === 0) {
     response.status(404).send("Book Not Found");
   } else {
-    response.send("Book Deleted Successfully");
+    response.status(200).send("Book Deleted Successfully");
   }
 });
 
@@ -103,12 +111,17 @@ const initializeDBAndServer = async () => {
 
     console.log("Database Connected Successfully");
 
-    app.listen(3000, () => {
-      console.log("Server Running at http://localhost:3000/");
+    // Render provides PORT automatically.
+    // Locally, the server uses port 3000.
+    const PORT = process.env.PORT || 3000;
+
+    app.listen(PORT, () => {
+      console.log(`Server Running on port ${PORT}`);
     });
 
   } catch (error) {
-    console.log(`Error: ${error.message}`);
+    console.error(`Database Connection Error: ${error.message}`);
+    process.exit(1);
   }
 };
 
